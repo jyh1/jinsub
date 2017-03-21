@@ -23,6 +23,7 @@ options = Options <$> parseInter <*> parseTemplate <*> parseCommand
                                 , metavar "TEMPLATE"
                                 , help "PBS template to use"
                                 , value "default"
+                                , showDefault
                                 ])
     parseCommand = some (strArgument (metavar "commands" <> help "Command to run in pbs job"))
 
