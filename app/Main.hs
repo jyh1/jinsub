@@ -1,6 +1,8 @@
 module Main where
 
--- import
+import OptionsParser
 
 main :: IO ()
-main = undefined
+main = do
+  opt <- getOptions
+  print opt

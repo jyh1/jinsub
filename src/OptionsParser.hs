@@ -8,6 +8,7 @@ data Options = Options {
   , template :: String
   , command :: [String]
 }
+  deriving (Eq, Show, Read)
 
 options :: Parser Options
 options = Options <$> parseInter <*> parseTemplate <*> parseCommand
