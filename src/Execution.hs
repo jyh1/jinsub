@@ -1,9 +1,22 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Template where
+module Execution where
 
-import Turtle
 import Prelude hiding(FilePath)
+import Filesystem.Path.CurrentOS
 import qualified Data.Text as T
+import Turtle
+
+import OptionsParser
+
+
+
+execute :: Options -> IO ()
+execute opts = do
+    dir <- pwd
+    stdout $ generatePBS (getTemplateFile opts) [("CurrentDirectory", repr dir)]
+  where
+    getTemplateFile :: Options -> FilePath
+    getTemplateFile opts = fromText (T.pack $ template opts)
 
 
 generatePBS :: FilePath -> [(Text, Text)] -> Shell Line
