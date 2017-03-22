@@ -73,7 +73,7 @@ getTemplate opts dataPath = do
       sed pat (input temp)
       where
         getDef :: Text -> Text -> Text
-        getDef = format (s % "=\"" %s% "\"")
+        getDef a b = format (s % "=\"" %s% "\"") (T.strip a) (T.strip b)
         defPlaceHolder = "#DEFS"
 
 pathToText = fromEither . toText
