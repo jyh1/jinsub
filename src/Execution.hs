@@ -12,12 +12,18 @@ import System.Directory
 
 
 execute :: Options -> IO ()
-execute opts = do
-  undefined
+execute opts = sh (executeSh opts)
+  where executeSh = undefined
+
+qsub :: Options -> FilePath -> Shell ()
+qsub opts pbs = do
+  proc "qsub" [pathToText pbs] stdin
+  return ()
+
 
 getTemplate :: Options -> Shell FilePath
 getTemplate opts = do
-    dir <- fmap (fromEither . toText) pwd
+    dir <- fmap pathToText pwd
     let vs = ("CurrentDirectory", dir) : getArgs opts
     tempF <- getOutputFile opts
     output tempF (generatePBS (getTemplateFile opts) vs)
@@ -47,3 +53,5 @@ getTemplate opts = do
         getDef :: Text -> Text -> Text
         getDef = format (s % "=\"" %s% "\"")
         defPlaceHolder = "#DEFS"
+
+pathToText = fromEither . toText
