@@ -13,12 +13,12 @@ import OptionsParser
 execute :: Options -> IO ()
 execute opts = do
     dir <- fmap (fromEither . toText) pwd
-    let vs = ("CurrentDirectory", repr dir) : getArgs opts
+    let vs = ("CurrentDirectory", dir) : getArgs opts
     stdout $ generatePBS (getTemplateFile opts) vs
   where
     fromEither (Left a) = a
     fromEither (Right a) = a
-    
+
     getTemplateFile :: Options -> FilePath
     getTemplateFile opts = fromText (T.pack $ template opts)
 
@@ -26,6 +26,7 @@ execute opts = do
     getArgs opts =
       [("CMD", T.pack (unwords (command opts)))]
 
+-- getTemplaet
 
 generatePBS :: FilePath -> [(Text, Text)] -> Shell Line
 generatePBS temp vars = do
