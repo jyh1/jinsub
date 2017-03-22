@@ -5,8 +5,9 @@ import Prelude hiding(FilePath)
 import Filesystem.Path.CurrentOS
 import qualified Data.Text as T
 import Turtle
-import Control.Monad
+import Control.Monad(unless)
 import System.Directory
+import Data.Maybe(fromMaybe)
 
 
 import OptionsParser
@@ -44,20 +45,17 @@ getTemplate opts dataPath = do
     getTemplateFile :: Options -> FilePath -> Shell FilePath
     getTemplateFile opts dataPath =
       let
-        givenP = fromString (template opts)
-        tempP = addConfigExtension (dataPath </> givenP)
+        templateOption = fromString (template opts)
+        tempP = addConfigExtension (dataPath </> templateOption)
+        fileP = fmap fromString (fileTemplate opts)
+        templateToRead = fromMaybe tempP fileP
       in
         do
-          ifExist <- testfile givenP
-          if ifExist
-            then
-              return givenP
-            else do
-              ifExist <- testfile tempP
-              unless ifExist $ do
-                printf ("Cannot find template file \""%fp%"\". Exiting.") givenP
-                exit (ExitFailure (-1))
-              return tempP
+          ifExist <- testfile templateToRead
+          unless ifExist $ do
+            printf ("Cannot find template file \""%fp%"\". Exiting.") templateToRead
+            exit (ExitFailure (-1))
+          return templateToRead
 
 
     getArgs :: Options -> [(Text, Text)]
