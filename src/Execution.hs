@@ -12,7 +12,9 @@ import System.Directory
 import OptionsParser
 import Config
 
+appName :: (IsString a) => a
 appName = "jinsub"
+
 addConfigExtension a = a <.> "jinsub"
 
 execute :: Options -> IO ()
@@ -33,8 +35,8 @@ getTemplate :: Options -> FilePath -> Shell FilePath
 getTemplate opts dataPath = do
     dir <- fmap pathToText pwd
     let vs = ("CurrentDirectory", dir) : getArgs opts
-    tempF <- getOutputFile opts dataPath
-    inputTemp <- getTemplateFile opts dataPath
+    tempF <- getOutputFile opts dataPath -- temporary file to write
+    inputTemp <- getTemplateFile opts dataPath -- template file
     output tempF (generatePBS inputTemp vs)
     return tempF
   where
@@ -47,7 +49,15 @@ getTemplate opts dataPath = do
       in
         do
           ifExist <- testfile givenP
-          if ifExist then return givenP else return tempP
+          if ifExist
+            then
+              return givenP
+            else do
+              ifExist <- testfile tempP
+              unless ifExist $ do
+                printf ("Cannot find template file \""%fp%"\". Exiting.") givenP
+                exit (ExitFailure (-1))
+              return tempP
 
 
     getArgs :: Options -> [(Text, Text)]
@@ -56,7 +66,7 @@ getTemplate opts dataPath = do
 
     getOutputFile :: Options -> FilePath -> Shell FilePath
     getOutputFile opts path = do
-      using (mktempfile path "jinsub")
+      using (mktempfile path appName)
 
     generatePBS :: FilePath -> [(Text, Text)] -> Shell Line
     generatePBS temp vars = do
