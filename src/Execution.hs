@@ -12,6 +12,8 @@ import System.Directory
 import OptionsParser
 import Config
 
+appName = "jinsub"
+addConfigExtension a = a <.> "jinsub"
 
 execute :: Options -> IO ()
 execute opts = sh (executeSh opts)
@@ -32,12 +34,21 @@ getTemplate opts dataPath = do
     dir <- fmap pathToText pwd
     let vs = ("CurrentDirectory", dir) : getArgs opts
     tempF <- getOutputFile opts dataPath
-    output tempF (generatePBS (getTemplateFile opts) vs)
+    inputTemp <- getTemplateFile opts dataPath
+    output tempF (generatePBS inputTemp vs)
     return tempF
   where
 
-    getTemplateFile :: Options -> FilePath
-    getTemplateFile opts = fromText (T.pack $ template opts)
+    getTemplateFile :: Options -> FilePath -> Shell FilePath
+    getTemplateFile opts dataPath =
+      let
+        givenP = fromString (template opts)
+        tempP = addConfigExtension (dataPath </> givenP)
+      in
+        do
+          ifExist <- testfile givenP
+          if ifExist then return givenP else return tempP
+
 
     getArgs :: Options -> [(Text, Text)]
     getArgs opts =
@@ -65,9 +76,9 @@ pathToText = fromEither . toText
 
 getDataDirectory :: Shell FilePath
 getDataDirectory = do
-  path <- fmap fromString (liftIO (getAppUserDataDirectory "jinsub"))
+  path <- fmap fromString (liftIO (getAppUserDataDirectory appName))
   exist <- testdir path
   unless exist $ do
     mkdir path
-    liftIO (writeTextFile (path </> "default.jinsub") defaultPBS)
+    liftIO (writeTextFile (addConfigExtension (path </> "default")) defaultPBS)
   return path
