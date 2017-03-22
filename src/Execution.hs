@@ -38,7 +38,7 @@ getTemplate opts dataPath = do
     let vs = ("CurrentDirectory", dir) : getArgs opts
     tempF <- getOutputFile opts dataPath -- temporary file to write
     inputTemp <- getTemplateFile opts dataPath -- template file
-    output tempF (generatePBS inputTemp vs)
+    output tempF (generatePBS opts inputTemp vs)
     return tempF
   where
 
@@ -60,21 +60,25 @@ getTemplate opts dataPath = do
 
     getArgs :: Options -> [(Text, Text)]
     getArgs opts =
-      [("CMD", T.pack (unwords (command opts)))]
+      -- [("CMD", T.pack (unwords (command opts)))]
+      []
 
     getOutputFile :: Options -> FilePath -> Shell FilePath
     getOutputFile opts path = do
       using (mktempfile path appName)
 
-    generatePBS :: FilePath -> [(Text, Text)] -> Shell Line
-    generatePBS temp vars = do
+    generatePBS :: Options -> FilePath -> [(Text, Text)] -> Shell Line
+    generatePBS opts temp vars = do
       let varDefs = map (uncurry getDef) vars
-          pat = defPlaceHolder *> return (T.unlines varDefs)
+          pat = (defPlaceHolder *> return (T.unlines varDefs))
+                <|> (cmdPlaceHolder *> return (getCmd opts))
       sed pat (input temp)
       where
         getDef :: Text -> Text -> Text
         getDef a b = format (s % "=\"" %s% "\"") (T.strip a) (T.strip b)
+        getCmd opts = T.pack (unwords (command opts))
         defPlaceHolder = "#DEFS"
+        cmdPlaceHolder = "#CMD"
 
 pathToText = fromEither . toText
   where

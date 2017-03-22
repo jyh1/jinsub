@@ -24,5 +24,5 @@ cd $CurrentDirectory
 
 echo begin executing
 # command variable.
-$CMD
+#CMD
 |]
