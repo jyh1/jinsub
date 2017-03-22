@@ -12,11 +12,19 @@ import OptionsParser
 
 execute :: Options -> IO ()
 execute opts = do
-    dir <- pwd
-    stdout $ generatePBS (getTemplateFile opts) [("CurrentDirectory", repr dir)]
+    dir <- fmap (fromEither . toText) pwd
+    let vs = ("CurrentDirectory", repr dir) : getArgs opts
+    stdout $ generatePBS (getTemplateFile opts) vs
   where
+    fromEither (Left a) = a
+    fromEither (Right a) = a
+    
     getTemplateFile :: Options -> FilePath
     getTemplateFile opts = fromText (T.pack $ template opts)
+
+    getArgs :: Options -> [(Text, Text)]
+    getArgs opts =
+      [("CMD", T.pack (unwords (command opts)))]
 
 
 generatePBS :: FilePath -> [(Text, Text)] -> Shell Line
