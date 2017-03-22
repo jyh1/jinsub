@@ -35,7 +35,7 @@ options = Options
                                     , short 'f'
                                     , metavar "TEMPLATE_FILE"
                                     , help "Specify a template file path"])
-    parseCommand = some (strArgument (metavar "commands" <> help "Command to run in pbs job"))
+    parseCommand = many (strArgument (metavar "commands" <> help "Command to run in pbs job"))
 
 
 getOptions :: IO Options
