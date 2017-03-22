@@ -13,7 +13,10 @@ import System.Directory
 
 execute :: Options -> IO ()
 execute opts = sh (executeSh opts)
-  where executeSh = undefined
+  where
+    executeSh opts = do
+      temp <- getTemplate opts
+      qsub opts temp
 
 qsub :: Options -> FilePath -> Shell ()
 qsub opts pbs = do
@@ -29,8 +32,6 @@ getTemplate opts = do
     output tempF (generatePBS (getTemplateFile opts) vs)
     return tempF
   where
-    fromEither (Left a) = a
-    fromEither (Right a) = a
 
     getTemplateFile :: Options -> FilePath
     getTemplateFile opts = fromText (T.pack $ template opts)
@@ -55,3 +56,6 @@ getTemplate opts = do
         defPlaceHolder = "#DEFS"
 
 pathToText = fromEither . toText
+  where
+    fromEither (Left a) = a
+    fromEither (Right a) = a
