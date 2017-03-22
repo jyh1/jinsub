@@ -1,8 +1,9 @@
 module Main where
 
 import OptionsParser
+import Execution
 
 main :: IO ()
 main = do
   opt <- getOptions
-  print opt
+  execute opt
