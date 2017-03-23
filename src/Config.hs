@@ -17,12 +17,10 @@ defaultPBS = [r|
 #PBS -q job_run
 #PBS -l walltime=02:00:00
 
-# Definitions of environment variable will be expanded here.
-#DEFS
 
-cd $WorkingDirectory
+cd #(WorkingDirectory)
 
 echo begin executing
 # command placeholder.
-#CMD
+#(CMD)
 |]

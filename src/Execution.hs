@@ -35,10 +35,9 @@ qsub opts pbs = do
 getTemplate :: Options -> FilePath -> Shell FilePath
 getTemplate opts dataPath = do
     dir <- fmap pathToText pwd
-    let vs = ("WorkingDirectory", dir) : getArgs opts
     tempF <- getOutputFile opts dataPath -- temporary file to write
-    inputTemp <- getTemplateFile opts dataPath -- template file
-    output tempF (generatePBS opts inputTemp vs)
+    inputTemp <- getTemplateFile opts dataPath -- loaded template file
+    output tempF (generatePBS opts inputTemp)
     return tempF
   where
 
@@ -57,28 +56,26 @@ getTemplate opts dataPath = do
             exit (ExitFailure (-1))
           return templateToRead
 
-
-    getArgs :: Options -> [(Text, Text)]
-    getArgs opts =
-      -- [("CMD", T.pack (unwords (command opts)))]
-      []
-
     getOutputFile :: Options -> FilePath -> Shell FilePath
     getOutputFile opts path = do
       using (mktempfile path appName)
 
-    generatePBS :: Options -> FilePath -> [(Text, Text)] -> Shell Line
-    generatePBS opts temp vars = do
-      let varDefs = map (uncurry getDef) vars
-          pat = (defPlaceHolder *> return (T.unlines varDefs))
-                <|> (cmdPlaceHolder *> return (getCmd opts))
+    generatePBS :: Options -> FilePath -> Shell Line
+    generatePBS opts temp = do
+      dir <- pwd
+      let
+        replacement = ("CMD", getCmd opts)
+                        : ("WorkingDirectory", pathToText dir)
+                        : variableTerm opts
+        pat = foldr1 (<|>) (map getPat replacement)
+
       sed pat (input temp)
       where
-        getDef :: Text -> Text -> Text
-        getDef a b = format (s % "=\"" %s% "\"") (T.strip a) (T.strip b)
+        getPat :: (Text, Text) -> Pattern Text
+        getPat (a, b) = has (text (getPlaceHolder a)) *> return b
         getCmd opts = T.pack (unwords (command opts))
-        defPlaceHolder = "#DEFS"
-        cmdPlaceHolder = "#CMD"
+        getPlaceHolder :: Text -> Text
+        getPlaceHolder = format ("#("%s%")")
 
 pathToText = fromEither . toText
   where

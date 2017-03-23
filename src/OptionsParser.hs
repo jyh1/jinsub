@@ -2,12 +2,14 @@ module OptionsParser where
 
 import Options.Applicative
 import Data.Semigroup ((<>))
+import Data.Text(Text, pack)
 
 
 data Options = Options {
     interactive :: Bool
   , template :: String
   , fileTemplate :: Maybe String
+  , variableTerm :: [(Text, Text)]
   , command :: [String]
 }
   deriving (Eq, Show, Read)
@@ -17,6 +19,7 @@ options = Options
             <$> parseInter
             <*> parseTemplate
             <*> parseFileTemplate
+            <*> parseVariableTerm
             <*> parseCommand
   where
     parseInter = switch (foldr1 (<>)
@@ -36,6 +39,23 @@ options = Options
                                     , short 'f'
                                     , metavar "TEMPLATE_FILE"
                                     , help "Specify a template file path"])
+
+    parseVariableTerm = many $ option
+                                (maybeReader variableTerm)
+                                (foldr1 (<>)
+                                  [short 'v'
+                                  , metavar "VAR=VALUE"
+                                  , help "Environment variables to set in template defination placeholder"
+                                  ])
+      where
+        variableTerm :: String -> Maybe (Text, Text)
+        variableTerm s =
+          let (var, val) = span (/= '=') s in
+            if null var || null val
+              then Nothing
+              else Just (pack var, pack val)
+
+
     parseCommand = many (strArgument (metavar "commands" <> help "Command to run in pbs job"))
 
 
