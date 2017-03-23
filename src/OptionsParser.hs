@@ -3,6 +3,7 @@ module OptionsParser where
 import Options.Applicative
 import Data.Semigroup ((<>))
 
+
 data Options = Options {
     interactive :: Bool
   , template :: String

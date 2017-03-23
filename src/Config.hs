@@ -20,9 +20,9 @@ defaultPBS = [r|
 # Definitions of environment variable will be expanded here.
 #DEFS
 
-cd $CurrentDirectory
+cd $WorkingDirectory
 
 echo begin executing
-# command variable.
+# command placeholder.
 #CMD
 |]

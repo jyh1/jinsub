@@ -35,7 +35,7 @@ qsub opts pbs = do
 getTemplate :: Options -> FilePath -> Shell FilePath
 getTemplate opts dataPath = do
     dir <- fmap pathToText pwd
-    let vs = ("CurrentDirectory", dir) : getArgs opts
+    let vs = ("WorkingDirectory", dir) : getArgs opts
     tempF <- getOutputFile opts dataPath -- temporary file to write
     inputTemp <- getTemplateFile opts dataPath -- template file
     output tempF (generatePBS opts inputTemp vs)
