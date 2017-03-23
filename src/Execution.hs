@@ -72,7 +72,7 @@ getTemplate opts dataPath = do
       sed pat (input temp)
       where
         getPat :: (Text, Text) -> Pattern Text
-        getPat (a, b) = has (text (getPlaceHolder a)) *> return b
+        getPat (a, b) = text (getPlaceHolder a) *> return b
         getCmd opts = T.pack (unwords (command opts))
         getPlaceHolder :: Text -> Text
         getPlaceHolder = format ("#("%s%")")

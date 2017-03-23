@@ -51,9 +51,9 @@ options = Options
         variableTerm :: String -> Maybe (Text, Text)
         variableTerm s =
           let (var, val) = span (/= '=') s in
-            if null var || null val
+            if null var || val == "=" || null val
               then Nothing
-              else Just (pack var, pack val)
+              else Just (pack var, pack (tail val))
 
 
     parseCommand = many (strArgument (metavar "commands" <> help "Command to run in pbs job"))

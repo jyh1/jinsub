@@ -17,6 +17,8 @@ library
   hs-source-dirs:      src
   exposed-modules:     OptionsParser
                      , Execution
+  other-modules:
+                      Config
   build-depends:       base >= 4.7 && < 5
                      , directory
                      , optparse-applicative
