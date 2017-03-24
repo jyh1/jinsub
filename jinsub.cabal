@@ -17,8 +17,9 @@ library
   hs-source-dirs:      src
   exposed-modules:     OptionsParser
                      , Execution
+                     , Interactive
   other-modules:
-                      Config
+                       Config
   build-depends:       base >= 4.7 && < 5
                      , directory
                      , optparse-applicative
@@ -26,6 +27,7 @@ library
                      , text
                      , system-filepath
                      , raw-strings-qq
+                     , async
   default-language:    Haskell2010
 
 executable jinsub
