@@ -8,6 +8,7 @@ import Turtle
 import Control.Monad(unless)
 import System.Directory
 import Data.Maybe(fromMaybe)
+import Interactive(interactMode)
 
 
 import OptionsParser
@@ -24,12 +25,13 @@ execute opts = sh (executeSh opts)
     executeSh opts = do
       path <- getDataDirectory
       temp <- getTemplate opts path
-      qsub opts temp
+      qid <- qsub opts temp
+      when (interactive opts) (liftIO (interactMode qid))
 
-qsub :: Options -> FilePath -> Shell ()
+qsub :: Options -> FilePath -> Shell Text
 qsub opts pbs = do
-  proc "qsub" [pathToText pbs] stdin
-  return ()
+  jid <- inproc "qsub" [pathToText pbs] stdin
+  return (lineToText jid)
 
 
 getTemplate :: Options -> FilePath -> Shell FilePath

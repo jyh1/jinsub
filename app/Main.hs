@@ -7,6 +7,5 @@ import Interactive
 
 main :: IO ()
 main = do
-  -- opt <- getOptions
-  -- execute opt
-  interactMode "234.bio"
+  opt <- getOptions
+  execute opt
