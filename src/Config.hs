@@ -12,8 +12,8 @@ defaultPBS = [r|
 # An example template file of jinsub.
 
 #PBS -N jinsub_default
-#PBS -o job.log
-#PBS -e job.err
+#PBS -o jinsub_job.log
+#PBS -e jinsub_job.err
 #PBS -q job_run
 #PBS -l walltime=02:00:00
 
