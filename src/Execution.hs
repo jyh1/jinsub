@@ -36,7 +36,9 @@ execute opts = sh (executeSh opts)
         qsubOpt = if interactive opts then ["-N", interactName, "-k", "oe"] else []
       in do
         qid <- qsub opts qsubOpt temp
-        when (interactive opts) (liftIO (interactMode qid))
+        when (interactive opts) $ do
+          Turtle.append temp (select ["echo", unsafeTextToLine (T.append "echo " jobEndSignal)])
+          liftIO (interactMode qid)
 
 qsub :: Options -> [Text] -> FilePath -> Shell Text
 qsub opts qsubOpt pbs = do
@@ -52,7 +54,6 @@ getTemplate opts dataPath = do
     tempF <- getOutputFile opts dataPath -- temporary file to write
     inputTemp <- getTemplateFile opts dataPath -- loaded template file
     output tempF (generatePBS opts inputTemp)
-    Turtle.append tempF (select ["echo", unsafeTextToLine (T.append "echo " jobEndSignal)])
     return tempF
   where
 
