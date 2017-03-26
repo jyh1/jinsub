@@ -48,7 +48,7 @@ options = Options
                                     , help "Specify a template file path"])
 
     parseSave = optional $ strOption (foldr1 (<>)
-                                      [long "save_as"
+                                      [long "save-as"
                                       , short 's'
                                       , metavar "FILEPATH"
                                       , help "Save generated pbs file to FILEPATH"

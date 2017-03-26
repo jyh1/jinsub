@@ -7,7 +7,7 @@ import qualified Data.Text as T
 import Turtle
 import Control.Monad(unless)
 import System.Directory
-import Data.Maybe(fromMaybe)
+import Data.Maybe(fromMaybe, isNothing)
 import Interactive(interactMode, interactName, jobEndSignal)
 
 
@@ -25,8 +25,9 @@ execute opts = sh (executeSh opts)
     executeSh opts = do
       path <- getDataDirectory
       temp <- getTemplate opts path
+      saveFile opts temp
       if dryRun opts then
-        stdout (input temp)
+        when (isNothing (saveAs opts)) $ stdout (input temp)
       else
         submit opts temp
 
@@ -42,6 +43,8 @@ qsub opts qsubOpt pbs = do
   jid <- inproc "qsub" (qsubOpt ++ [pathToText pbs]) stdin
   return (lineToText jid)
 
+saveFile :: Options -> FilePath -> Shell ()
+saveFile opts temp = mapM_ (cp temp . fromText . T.pack) (saveAs opts)
 
 getTemplate :: Options -> FilePath -> Shell FilePath
 getTemplate opts dataPath = do
