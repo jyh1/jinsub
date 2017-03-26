@@ -12,6 +12,7 @@ data Options = Options {
   , variableTerm :: [(Text, Text)]
   , command :: [String]
   , dryRun :: Bool
+  , saveAs :: Maybe String
 }
   deriving (Eq, Show, Read)
 
@@ -23,6 +24,7 @@ options = Options
             <*> parseVariableTerm
             <*> parseCommand
             <*> parseDryRun
+            <*> parseSave
   where
     parseInter = switch (foldr1 (<>)
                           [long "interactive"
@@ -30,7 +32,7 @@ options = Options
                           , help "Whether display stdout in real time"])
     parseDryRun = switch (foldr1 (<>)
                           [long "dry-run"
-                          , help "Print generated pbs file to stdout submitting to nodes"])
+                          , help "Print generated pbs job file to stdout without submitting to nodes"])
     parseTemplate = strOption (foldr1 (<>)
                                 [long "template"
                                 , short 't'
@@ -45,14 +47,25 @@ options = Options
                                     , metavar "TEMPLATE_FILE"
                                     , help "Specify a template file path"])
 
+    parseSave = optional $ strOption (foldr1 (<>)
+                                      [long "save_as"
+                                      , short 's'
+                                      , metavar "FILEPATH"
+                                      , help "Save generated pbs file to FILEPATH"
+                                      ])
+
     parseVariableTerm = many $ option
                                 (maybeReader variableTerm)
                                 (foldr1 (<>)
                                   [short 'v'
                                   , metavar "VAR=VALUE"
                                   , help "Environment variables to set in template defination placeholder"
-                                  ])
-      where
+                                  ]
+                                )
+
+
+
+          where
         variableTerm :: String -> Maybe (Text, Text)
         variableTerm s =
           let (var, val) = span (/= '=') s in
