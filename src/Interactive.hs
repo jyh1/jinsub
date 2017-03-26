@@ -13,6 +13,14 @@ import Control.Exception
 import Data.Text.IO
 import Data.Tuple.Extra ((&&&), both)
 
+data Resources = Resources {
+    oPath :: FilePath
+  , ePath :: FilePath
+  , oHandle :: Handle
+  , oProcess :: ProcessHandle
+  , eProcess :: ProcessHandle
+  , jobId :: Text
+}
 
 interactName :: Text
 interactName = "INTERACT"
@@ -21,27 +29,47 @@ jobEndSignal :: Text
 jobEndSignal = "Jinsub_Interactive_EOF"
 
 interactMode :: Text -> IO ()
-interactMode jobId =
-    catch monitor (onUserInterupt undefined)
+interactMode jobId = do
+  (name, errName) <- getFileName jobId
+  let
+    (sname, serrName) = both (T.unpack . format fp) (name, errName)
+    watcher = createProcess_ "watcher" (tailProcess sname CreatePipe)
+    errWatcher = createProcess_ "watcher_stderr" (tailProcess serrName (UseHandle stderr))
+    qdel = createProcess_ "qdel" (generateProcess ("qdel "++T.unpack jobId) NoStream)
+  finally
+    (bracket
+      (runWatcher watcher)
+      (terminateProcess . snd)
+      (\(outH, wHandle) ->
+        bracket
+          (runErrWatcher errWatcher)
+          terminateProcess
+          (\_ -> iter outH)
+      )
+    )
+    (qdelAndDelete qdel name errName)
   where
-    monitor = do
-      (name, errName) <- getFileName jobId
-      let
-        (sname, serrName) = both (T.unpack . format fp) (name, errName)
-        watcher = createProcess_ "watcher" (tailProcess sname CreatePipe)
-        errWatcher = createProcess_ "watcher_stderr" (tailProcess serrName (UseHandle stderr))
-      (_, Just outH, _, wHandle)  <- watcher
+    runWatcher watcher = do
+      (_, Just outH, _, wHandle) <- watcher
+      return (outH, wHandle)
+    runErrWatcher errWatcher = do
       (_, _, _, weHandle) <- errWatcher
-      iter outH
-      terminateProcess wHandle
-      terminateProcess weHandle
-    iter :: Handle -> IO ()
-    iter outH = do
-      l <- hGetLine outH
-      unless (l == jobEndSignal) $
-        do
-          putStrLn l
-          iter outH
+      return weHandle
+    qdelAndDelete qdelP name errName = do
+      runAndWait qdelP
+      remove name
+      remove errName
+
+    remove :: FilePath -> IO ()
+    remove name =
+      let sn = T.unpack (format fp name) in
+        runAndWait (createProcess_ "remove_forcibly" (generateProcess ("rm -f " ++ sn) NoStream))
+
+    runAndWait p = do
+      (_, _, _, h) <- p
+      _ <- waitForProcess h
+      return ()
+
     getFileName jobP = do
       h <- home
       return $ both (h </>) (getName jobP)
@@ -55,22 +83,23 @@ interactMode jobId =
             getPath p = fromText . T.append p
 
 
-onUserInterupt :: FilePath ->  AsyncException -> IO ()
-onUserInterupt _ e = do
-  putStrLn "Exiting!"
-  print e
+iter :: Handle -> IO ()
+iter outH = do
+  l <- hGetLine outH
+  unless (l == jobEndSignal) $
+    do
+      putStrLn l
+      iter outH
 
-finalize :: ((ProcessHandle, FilePath), (ProcessHandle, FilePath)) -> IO ()
-finalize = undefined
 
-pathToText = fromEither . toText
-  where
-    fromEither (Left a) = a
-    fromEither (Right a) = a
-
+pathToText = format fp
 
 tailProcess :: String -> StdStream -> CreateProcess
-tailProcess str stream = CreateProcess { cmdspec = ShellCommand ("tail -n +1 --follow=name --retry " ++ str),
+tailProcess str = generateProcess ("tail -n +1 --follow=name --retry " ++ str)
+
+
+generateProcess :: String -> StdStream -> CreateProcess
+generateProcess str stream = CreateProcess { cmdspec = ShellCommand str,
                                   cwd = Nothing,
                                   env = Nothing,
                                   std_in = NoStream,
