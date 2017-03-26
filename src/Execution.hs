@@ -8,7 +8,7 @@ import Turtle
 import Control.Monad(unless)
 import System.Directory
 import Data.Maybe(fromMaybe)
-import Interactive(interactMode)
+import Interactive(interactMode, interactName, jobEndSignal)
 
 
 import OptionsParser
@@ -25,12 +25,13 @@ execute opts = sh (executeSh opts)
     executeSh opts = do
       path <- getDataDirectory
       temp <- getTemplate opts path
-      qid <- qsub opts temp
+      let qsubOpt = if interactive opts then ["-N", interactName] else []
+      qid <- qsub opts qsubOpt temp
       when (interactive opts) (liftIO (interactMode qid))
 
-qsub :: Options -> FilePath -> Shell Text
-qsub opts pbs = do
-  jid <- inproc "qsub" [pathToText pbs] stdin
+qsub :: Options -> [Text] -> FilePath -> Shell Text
+qsub opts qsubOpt pbs = do
+  jid <- inproc "qsub" (qsubOpt ++ [pathToText pbs]) stdin
   return (lineToText jid)
 
 
@@ -40,6 +41,7 @@ getTemplate opts dataPath = do
     tempF <- getOutputFile opts dataPath -- temporary file to write
     inputTemp <- getTemplateFile opts dataPath -- loaded template file
     output tempF (generatePBS opts inputTemp)
+    Turtle.append tempF (select ["echo", unsafeTextToLine (T.append "echo " jobEndSignal)])
     return tempF
   where
 

@@ -11,7 +11,7 @@ defaultPBS = [r|
 #!/bin/sh
 # An example template file of jinsub.
 
-#PBS -N job_name
+#PBS -N jinsub_default
 #PBS -o job.log
 #PBS -e job.err
 #PBS -q job_run
