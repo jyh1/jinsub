@@ -77,10 +77,7 @@ getTemplate opts dataPath = do
         getPlaceHolder :: Text -> Text
         getPlaceHolder = format ("#("%s%")")
 
-pathToText = fromEither . toText
-  where
-    fromEither (Left a) = a
-    fromEither (Right a) = a
+pathToText = format fp
 
 
 getDataDirectory :: Shell FilePath

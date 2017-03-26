@@ -27,7 +27,8 @@ library
                      , text
                      , system-filepath
                      , raw-strings-qq
-                     , async
+                    --  , async
+                     , process
   default-language:    Haskell2010
 
 executable jinsub
