@@ -11,6 +11,7 @@ data Options = Options {
   , fileTemplate :: Maybe String
   , variableTerm :: [(Text, Text)]
   , command :: [String]
+  , dryRun :: Bool
 }
   deriving (Eq, Show, Read)
 
@@ -21,11 +22,15 @@ options = Options
             <*> parseFileTemplate
             <*> parseVariableTerm
             <*> parseCommand
+            <*> parseDryRun
   where
     parseInter = switch (foldr1 (<>)
                           [long "interactive"
                           , short 'i'
                           , help "Whether display stdout in real time"])
+    parseDryRun = switch (foldr1 (<>)
+                          [long "dry-run"
+                          , help "Print generated pbs file to stdout submitting to nodes"])
     parseTemplate = strOption (foldr1 (<>)
                                 [long "template"
                                 , short 't'

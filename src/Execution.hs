@@ -25,9 +25,17 @@ execute opts = sh (executeSh opts)
     executeSh opts = do
       path <- getDataDirectory
       temp <- getTemplate opts path
-      let qsubOpt = if interactive opts then ["-N", interactName] else []
-      qid <- qsub opts qsubOpt temp
-      when (interactive opts) (liftIO (interactMode qid))
+      if dryRun opts then
+        stdout (input temp)
+      else
+        submit opts temp
+
+    submit opts temp =
+      let
+        qsubOpt = if interactive opts then ["-N", interactName, "-k", "oe"] else []
+      in do
+        qid <- qsub opts qsubOpt temp
+        when (interactive opts) (liftIO (interactMode qid))
 
 qsub :: Options -> [Text] -> FilePath -> Shell Text
 qsub opts qsubOpt pbs = do
