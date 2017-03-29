@@ -34,10 +34,11 @@ execute opts = sh (executeSh opts)
     submit opts temp =
       let
         qsubOpt = if interactive opts then ["-N", interactName, "-k", "oe"] else []
+        addEOF = Turtle.append temp (select ["echo", unsafeTextToLine (T.append "echo " jobEndSignal)])
       in do
+        when (interactive opts) addEOF
         qid <- qsub opts qsubOpt temp
-        when (interactive opts) $ do
-          Turtle.append temp (select ["echo", unsafeTextToLine (T.append "echo " jobEndSignal)])
+        when (interactive opts) $
           liftIO (interactMode qid)
 
 qsub :: Options -> [Text] -> FilePath -> Shell Text
