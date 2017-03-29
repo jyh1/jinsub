@@ -16,6 +16,13 @@ data Options = Options {
 }
   deriving (Eq, Show, Read)
 
+data EditCommand = EditCommand {
+    editor :: String
+}
+  deriving (Eq, Show, Read)
+
+data JinsubOptions = Main Options | Subnew EditCommand
+
 options :: Parser Options
 options = Options
             <$> parseInter
@@ -74,8 +81,13 @@ options = Options
               else Just (pack var, pack (tail val))
 
 
-    parseCommand = many (strArgument (metavar "commands" <> help "Command to run in pbs job"))
+    parseCommand = many (strArgument (metavar "CMD" <> help "Command to run in pbs job"))
 
+editCommand :: Parser EditCommand
+editCommand =
+  EditCommand <$> parseNew
+    where
+      parseNew = strArgument (metavar "TEMPLATE" <> help "")
 
 getOptions :: IO Options
 getOptions = execParser (info (options <**> helper) (progDesc "Quickly submit a pbs job"))
