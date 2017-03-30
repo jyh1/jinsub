@@ -2,9 +2,9 @@
 module Interactive where
 
 -- import Control.Concurrent.Async
-import Turtle hiding (env, stderr, stdout)
+import Turtle hiding (env, stderr, stdout, stdin)
 import System.Process
-import System.IO(stdout, stderr)
+import System.IO(stdout, stderr, stdin)
 import Data.Text as T
 import Prelude hiding (FilePath, putStrLn)
 import Control.Exception.Base
@@ -33,26 +33,26 @@ interactMode jobId = do
   (name, errName) <- getFileName jobId
   let
     (sname, serrName) = both (T.unpack . format fp) (name, errName)
-    watcher = createProcess_ "watcher" (tailProcess sname CreatePipe)
-    errWatcher = createProcess_ "watcher_stderr" (tailProcess serrName (UseHandle stderr))
+    watcher = createProcess_ "watcher" (tailProcess sname (UseHandle stdout))
+    errWatcher = createProcess_ "watcher_stderr" (tailProcess serrName CreatePipe)
     qdel = createProcess_ "qdel" (generateProcess ("qdel "++T.unpack jobId) NoStream)
   finally
     (bracket
-      (runWatcher watcher)
+      (runErrWatcher errWatcher)
       (terminateProcess . snd)
       (\(outH, wHandle) ->
         bracket
-          (runErrWatcher errWatcher)
+          (runWatcher watcher)
           terminateProcess
           (\_ -> iter outH)
       )
     )
     (qdelAndDelete qdel name errName)
   where
-    runWatcher watcher = do
+    runErrWatcher watcher = do
       (_, Just outH, _, wHandle) <- watcher
       return (outH, wHandle)
-    runErrWatcher errWatcher = do
+    runWatcher errWatcher = do
       (_, _, _, weHandle) <- errWatcher
       return weHandle
     qdelAndDelete qdelP name errName = do
@@ -88,7 +88,7 @@ iter outH = do
   l <- hGetLine outH
   unless (l == jobEndSignal) $
     do
-      putStrLn l
+      hPutStrLn stderr l
       iter outH
 
 

@@ -34,7 +34,8 @@ execute opts = sh (executeSh opts)
     submit opts temp =
       let
         qsubOpt = if interactive opts then ["-N", interactName, "-k", "oe"] else []
-        addEOF = Turtle.append temp (select ["echo", unsafeTextToLine (T.append "echo " jobEndSignal)])
+        addEOF = Turtle.append temp (select ["echo 1>&2", unsafeTextToLine
+                                                            (format ("echo "%s% " 1>&2") jobEndSignal)])
       in do
         when (interactive opts) addEOF
         qid <- qsub opts qsubOpt temp
