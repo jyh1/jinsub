@@ -20,7 +20,7 @@ defaultPBS = [r|
 
 cd #(WorkingDirectory)
 
-echo begin executing
+echo BEGIN EXECUTING
 # command placeholder.
 #(CMD)
 |]

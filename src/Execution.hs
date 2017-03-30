@@ -45,7 +45,7 @@ execute opts = sh (executeSh opts)
 qsub :: Options -> [Text] -> FilePath -> Shell Text
 qsub opts qsubOpt pbs = do
   jid <- inproc "qsub" (qsubOpt ++ [pathToText pbs]) stdin
-  echo jid
+  err jid
   return (lineToText jid)
 
 saveFile :: Options -> FilePath -> Shell ()
