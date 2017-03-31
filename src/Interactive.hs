@@ -4,7 +4,7 @@ module Interactive where
 -- import Control.Concurrent.Async
 import Turtle hiding (env, stderr, stdout, stdin)
 import System.Process
-import System.IO(stdout, stderr, stdin)
+import System.IO(stdout, stderr, stdin, hFlush)
 import Data.Text as T
 import Prelude hiding (FilePath, putStrLn)
 import Control.Exception.Base
@@ -89,6 +89,7 @@ iter outH = do
   unless (l == jobEndSignal) $
     do
       hPutStrLn stderr l
+      hFlush stderr
       iter outH
 
 
