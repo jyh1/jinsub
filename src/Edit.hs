@@ -6,6 +6,7 @@ import Filesystem.Path.CurrentOS as P
 import OptionsParser
 import Data.Maybe(isNothing)
 import Turtle
+import Config
 
 
 editorName = "vi"
@@ -22,8 +23,12 @@ runEditor f = do
 
 executeEdit :: EditCommand -> IO ()
 executeEdit (EditCommand f) =
-  let fpath = P.fromText (T.pack f) in
-    if checkTemplate f
-      then
-        runEditor (T.unpack (format fp (getTemplatePath fpath)))
-      else runEditor f
+  let fpath = fromString f
+      template = T.unpack (format fp (getTemplatePath fpath))
+      target = if checkTemplate f then template else f
+      targetP = fromString target in
+    do
+      exist <- testfile targetP
+      unless exist $
+        writeTextFile targetP defaultPBS
+      runEditor target
