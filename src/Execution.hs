@@ -96,8 +96,7 @@ pathToText = format fp
 
 getDataDirectory :: Shell FilePath
 getDataDirectory = do
-  exist <- testdir homePath
-  unless exist $ do
-    mkdir homePath
-    liftIO (writeTextFile (getTemplatePath "default") defaultPBS)
+  exist <- testfile defaultTemplate
+  unless exist $
+    liftIO (writeTextFile defaultTemplate defaultPBS)
   return homePath

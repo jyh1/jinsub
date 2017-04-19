@@ -9,6 +9,7 @@ import Filesystem.Path.CurrentOS ((<.>), (</>))
 import Data.String
 import System.IO.Unsafe(unsafePerformIO)
 import System.Directory(getAppUserDataDirectory)
+import Turtle(mktree)
 
 
 data Options = Options {
@@ -36,10 +37,15 @@ appName = "jinsub"
 addConfigExtension a = a <.> "jinsub"
 
 {-# NOINLINE homePath #-}
-homePath = unsafePerformIO $ fmap fromString (getAppUserDataDirectory appName)
+homePath = unsafePerformIO $ do
+              dir <- fmap fromString (getAppUserDataDirectory appName)
+              mktree dir
+              return dir
+
 
 getTemplatePath n = addConfigExtension (homePath </> n)
 
+defaultTemplate = getTemplatePath "default"
 
 options :: Parser Options
 options = Options
