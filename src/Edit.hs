@@ -21,6 +21,16 @@ runEditor f = do
   waitForProcess prc
   return ()
 
+loadDefault :: IO Text
+loadDefault = do
+  exist <- testfile defaultTemplate
+  if exist then
+    strict (input defaultTemplate)
+  else
+    return defaultPBS
+
+
+
 executeEdit :: EditCommand -> IO ()
 executeEdit (EditCommand f) =
   let fpath = fromString f
@@ -29,6 +39,7 @@ executeEdit (EditCommand f) =
       targetP = fromString target in
     do
       exist <- testfile targetP
+      initContent <- loadDefault
       unless exist $
-        writeTextFile targetP defaultPBS
+        writeTextFile targetP initContent
       runEditor target
