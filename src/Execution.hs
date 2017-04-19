@@ -6,7 +6,6 @@ import Filesystem.Path.CurrentOS
 import qualified Data.Text as T
 import Turtle
 import Control.Monad(unless)
-import System.Directory
 import Data.Maybe(fromMaybe, isNothing)
 import Interactive(interactMode, interactName, jobEndSignal)
 
@@ -14,10 +13,6 @@ import Interactive(interactMode, interactName, jobEndSignal)
 import OptionsParser
 import Config
 
-appName :: (IsString a) => a
-appName = "jinsub"
-
-addConfigExtension a = a <.> "jinsub"
 
 execute :: Options -> IO ()
 execute opts = sh (executeSh opts)
@@ -101,9 +96,8 @@ pathToText = format fp
 
 getDataDirectory :: Shell FilePath
 getDataDirectory = do
-  path <- fmap fromString (liftIO (getAppUserDataDirectory appName))
-  exist <- testdir path
+  exist <- testdir homePath
   unless exist $ do
-    mkdir path
-    liftIO (writeTextFile (addConfigExtension (path </> "default")) defaultPBS)
-  return path
+    mkdir homePath
+    liftIO (writeTextFile (getTemplatePath "default") defaultPBS)
+  return homePath

@@ -1,8 +1,14 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module OptionsParser where
 
 import Options.Applicative
 import Data.Semigroup ((<>))
 import Data.Text(Text, pack)
+import Filesystem.Path.CurrentOS ((<.>), (</>))
+import Data.String
+import System.IO.Unsafe(unsafePerformIO)
+import System.Directory(getAppUserDataDirectory)
 
 
 data Options = Options {
@@ -16,12 +22,24 @@ data Options = Options {
 }
   deriving (Eq, Show, Read)
 
-data EditCommand = EditCommand {
-    editor :: String
+newtype EditCommand = EditCommand {
+    file :: String
 }
   deriving (Eq, Show, Read)
 
-data JinsubOptions = Main Options | Subnew EditCommand
+data JinsubOptions = Main Options | Subedit EditCommand
+
+
+appName :: (IsString a) => a
+appName = "jinsub"
+
+addConfigExtension a = a <.> "jinsub"
+
+{-# NOINLINE homePath #-}
+homePath = unsafePerformIO $ fmap fromString (getAppUserDataDirectory appName)
+
+getTemplatePath n = addConfigExtension (homePath </> n)
+
 
 options :: Parser Options
 options = Options
@@ -85,9 +103,18 @@ options = Options
 
 editCommand :: Parser EditCommand
 editCommand =
-  EditCommand <$> parseNew
+  subparser (Options.Applicative.command "edit" parseEdit)
     where
+      parseEdit = info (EditCommand <$> parseNew) (progDesc "Edit a template file")
       parseNew = strArgument (metavar "TEMPLATE" <> help "")
 
-getOptions :: IO Options
-getOptions = execParser (info (options <**> helper) (progDesc "Quickly submit a pbs job"))
+jinsubOptions :: Parser JinsubOptions
+jinsubOptions = foldr1 (<|>)
+                  [jinsubEdit, jinsubMain]
+  where
+    jinsubEdit = Subedit <$> editCommand
+    jinsubMain = Main <$> options
+
+
+getOptions :: IO JinsubOptions
+getOptions = execParser (info (jinsubOptions <**> helper) (progDesc "Quickly submit a pbs job"))
